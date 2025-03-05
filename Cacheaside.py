@@ -59,7 +59,7 @@ class Database:
             cursor.execute("SELECT * FROM logs ORDER BY timestamp DESC LIMIT 10")
             logs = cursor.fetchall()
             for log in logs:
-                logging.info(f"🔍 {log[1]} - {log[2]}")
+                logging.info(f" {log[1]} - {log[2]}")
 
 class CacheAside:
     """Implementación del patrón Cache-Aside con Redis y SQLite."""
@@ -83,7 +83,7 @@ class CacheAside:
                 logging.info(f"Cache HIT: Producto '{product}' encontrado en Redis.")
                 return product
 
-        logging.info("⚠️ Cache MISS. Consultando base de datos...")
+        logging.info(" Cache MISS. Consultando base de datos...")
         product = self.db.get_product(product_id)
 
         if self.cache:
