@@ -80,7 +80,7 @@ class CacheAside:
         if self.cache:
             product = self.cache.get(product_id)
             if product:
-                logging.info(f"📌 Cache HIT: Producto '{product}' encontrado en Redis.")
+                logging.info(f"Cache HIT: Producto '{product}' encontrado en Redis.")
                 return product
 
         logging.info("⚠️ Cache MISS. Consultando base de datos...")
@@ -88,7 +88,7 @@ class CacheAside:
 
         if self.cache:
             self.cache.setex(product_id, self.ttl, product)
-            logging.info(f"📌 Producto '{product}' almacenado en caché por {self.ttl} segundos.")
+            logging.info(f"Producto '{product}' almacenado en caché por {self.ttl} segundos.")
 
         return product
 
