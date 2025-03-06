@@ -93,16 +93,12 @@ El sistema está desplegado en **Microsoft Azure**, lo que permite monitorear el
 - **Rendimiento de la BD**: Cantidad de consultas directas a SQLite.
 - **Latencia de respuesta**: Tiempo medio de respuesta en caché vs. base de datos.
 
-Puedes acceder a estas métricas en el portal de **Azure Monitor**.
 
 ## Conclusión
 
 Esta implementación del patrón **Cache-Aside** demuestra cómo mejorar la eficiencia en el acceso a los datos utilizando **Redis en Azure**. Al almacenar en caché los datos más consultados, logramos reducir la carga en la base de datos y mejorar el rendimiento general del sistema.
 
- **Siguientes pasos:**
-- Desplegar este sistema en **Azure App Service**.
-- Configurar **Azure Insights** para un monitoreo más detallado.
-- Ajustar la estrategia de expiración de caché según las necesidades del negocio.
+
 
 
 
