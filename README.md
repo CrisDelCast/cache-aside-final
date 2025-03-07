@@ -39,6 +39,7 @@ Este patrón permite almacenar temporalmente los datos más consultados en cach�
    ```python
    self.cache = redis.StrictRedis(host="<TU_HOST_AZURE>", port=6380, db=0, decode_responses=True, ssl=True)
    ```
+5. crear .env con la clave para conectarse
 
 ###  Paso 1: Inicializar la Base de Datos
 Ejecuta el script para crear la base de datos SQLite y poblarla con datos de prueba:
