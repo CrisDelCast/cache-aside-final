@@ -1,7 +1,24 @@
+from dotenv import load_dotenv
+# Conecta con servidor Redis
 import redis
-import sqlite3
-import logging
-import time
+import sqlite3  # Base de datos SQLite
+import logging  # Registrar eventos e información en consola
+from redis.cluster import RedisCluster
+import os
+REDIS_ACCESS_KEY = os.getenv("REDIS_ACCESS_KEY")
+
+
+# Cargar las variables de entorno desde el archivo .env
+load_dotenv()
+
+# Obtener la clave desde la variable de entorno
+REDIS_ACCESS_KEY = os.getenv("REDIS_ACCESS_KEY")
+
+
+if not REDIS_ACCESS_KEY:
+    raise ValueError("La clave REDIS_ACCESS_KEY no está definida. Verifica tu archivo .env")
+
+
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -40,6 +57,11 @@ class Database:
 
     def get_product(self, product_id, manual=False):
         """Obtiene un producto de la base de datos y registra acceso si es manual."""
+        try:
+            product_id = int(product_id)  # Asegura que sea un número
+        except ValueError:
+            return "ID inválido"
+
         with sqlite3.connect(self.db_name) as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT name FROM products WHERE id = ?", (product_id,))
@@ -62,33 +84,48 @@ class Database:
                 logging.info(f" {log[1]} - {log[2]}")
 
 class CacheAside:
-    """Implementación del patrón Cache-Aside con Redis y SQLite."""
-    def __init__(self, db, host="localhost", port=6379, db_index=0, ttl=30):
+    """Implementación del patrón Cache-Aside con Redis y SQLite en Azure."""
+    def __init__(self, db, host="mi-redis-cache.brazilsouth.redis.azure.net", port=10000, password=REDIS_ACCESS_KEY, ttl=1800):
         self.db = db
         self.ttl = ttl
 
         try:
-            self.cache = redis.StrictRedis(host=host, port=port, db=db_index, decode_responses=True)
+            self.cache = redis.StrictRedis(  # Usa StrictRedis en lugar de RedisCluster
+                host=host,
+                port=port,
+                password=password,
+                ssl=True,
+                decode_responses=True
+            )
             self.cache.ping()
-            logging.info("Conectado a Redis correctamente.")
+            logging.info("Conectado a Azure Redis correctamente.")
         except redis.ConnectionError:
-            logging.error("No se pudo conectar a Redis. Asegúrate de que Redis esté en ejecución.")
+            logging.error("No se pudo conectar a Redis en Azure. Verifica las credenciales.")
             self.cache = None
 
     def get_product(self, product_id):
         """Busca un producto en caché, si no está, lo obtiene de la BD y lo almacena."""
+        try:
+            product_id = int(product_id)  # Asegura que sea un número
+        except ValueError:
+            return "ID inválido"
+
+        str_product_id = str(product_id)  # Convierte a str solo para Redis
+
         if self.cache:
-            product = self.cache.get(product_id)
+            product = self.cache.get(str_product_id)
             if product:
                 logging.info(f"Cache HIT: Producto '{product}' encontrado en Redis.")
                 return product
 
-        logging.info(" Cache MISS. Consultando base de datos...")
+        logging.info("Cache MISS. Consultando base de datos...")
         product = self.db.get_product(product_id)
 
-        if self.cache:
-            self.cache.setex(product_id, self.ttl, product)
+        if self.cache and product != "Producto no encontrado":
+            self.cache.setex(str_product_id, self.ttl, product)
             logging.info(f"Producto '{product}' almacenado en caché por {self.ttl} segundos.")
+            cached_value = self.cache.get(str(product_id))
+            logging.info(f"🔍 Verificación inmediata en Redis: {cached_value}")
 
         return product
 
@@ -103,7 +140,7 @@ if __name__ == "__main__":
         for producto in productos:
             db.insert_product(producto)
 
-    cache_aside = CacheAside(db, ttl=20)
+    cache_aside = CacheAside(db, ttl=1800)
 
     while True:
         print("\nMenú:")
