@@ -90,7 +90,7 @@ class CacheAside:
         self.ttl = ttl
 
         try:
-            self.cache = redis.StrictRedis(  # Usa StrictRedis en lugar de RedisCluster
+            self.cache = redis.RedisCluster(  # Usa StrictRedis en lugar de RedisCluster
                 host=host,
                 port=port,
                 password=password,
